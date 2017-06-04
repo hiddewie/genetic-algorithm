@@ -9,19 +9,18 @@ import (
 // Creature defines an element of a pool for the genetic algorithm
 type Creature interface {
 	Fitness() float32
+	Mutate()
+	CrossOver(Creature) (Creature, Creature)
 }
 
 // Pool defines a pool containing creatures and for running a genetic algorithm
 type Pool interface {
-	NewCreature() Creature
 	Get(index int) Creature
 	Size() int
 	PoolSize() int
 	SetCreatures([]Creature)
 	Finished(iteration int, maxFitness, lastMaxFitness, averageFitness, lastAverageFitness float32, time int64) bool
 	Select() []Creature
-	CrossOver(Creature, Creature) (Creature, Creature)
-	Mutate(index int)
 	MutationProbability() float32
 }
 
@@ -94,7 +93,7 @@ func Run(p Pool) Creature {
 				other = WeightedSelect(breeding, maxFitness)
 			}
 			// Crossover creatures
-			a, b := p.CrossOver(first, other)
+			a, b := first.CrossOver(other)
 			newPool = append(newPool, a, b)
 		}
 		// Update the creatures
@@ -103,7 +102,7 @@ func Run(p Pool) Creature {
 		// Mutate
 		for i := 0; i < p.Size(); i++ {
 			if rand.Float32() < p.MutationProbability() {
-				p.Mutate(i)
+				p.Get(i).Mutate()
 			}
 		}
 
