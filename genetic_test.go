@@ -53,8 +53,12 @@ func (p *TestPool) Select() []Creature {
 }
 
 func (c *TestCreature) Fitness() float32 {
-	return c.value
+	return 0.25 - (c.value-0.5)*(c.value-0.5)
 }
+
+// func (c *TestCreature) Fitness() float32 {
+// 	return c.value
+// }
 
 func (p *TestPool) CrossOver(a, b Creature) (Creature, Creature) {
 	aValue, bValue := a.(*TestCreature).value, b.(*TestCreature).value
@@ -81,7 +85,7 @@ func (p *TestPool) SetCreatures(creatures []Creature) {
 	p.pool = creatures
 }
 
-var _ GeneticPool = (*TestPool)(nil)
+var _ Pool = (*TestPool)(nil)
 var _ Creature = (*TestCreature)(nil)
 
 func TestTestPool(t *testing.T) {
@@ -94,6 +98,6 @@ func TestTestPool(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-	pool := NewPool(10000, 0.4, 10)
+	pool := NewPool(100, 0.4, 5)
 	Run(pool)
 }

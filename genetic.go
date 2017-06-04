@@ -6,16 +6,17 @@ import (
 	"time"
 )
 
+// Creature defines an element of a pool for the genetic algorithm
 type Creature interface {
 	Fitness() float32
 }
 
-type GeneticPool interface {
+// Pool defines a pool containing creatures and for running a genetic algorithm
+type Pool interface {
 	NewCreature() Creature
 	Get(index int) Creature
 	Size() int
 	PoolSize() int
-	// Add(...Creature)
 	SetCreatures([]Creature)
 	Finished(iteration int, maxFitness, lastMaxFitness, averageFitness, lastAverageFitness float32, time int64) bool
 	Select() []Creature
@@ -24,7 +25,8 @@ type GeneticPool interface {
 	MutationProbability() float32
 }
 
-func MaxFitness(p GeneticPool) (Creature, float32) {
+// MaxFitness detemines the maximum fitness and the creature in the pool
+func MaxFitness(p Pool) (Creature, float32) {
 	var max float32
 	var best Creature
 	for i := 0; i < p.Size(); i++ {
@@ -37,7 +39,8 @@ func MaxFitness(p GeneticPool) (Creature, float32) {
 	return best, max
 }
 
-func AverageFitness(p GeneticPool) float32 {
+// AverageFitness detemines the average fitness of the pool
+func AverageFitness(p Pool) float32 {
 	var sum float32
 	for i := 0; i < p.Size(); i++ {
 		sum += p.Get(i).Fitness()
@@ -45,6 +48,7 @@ func AverageFitness(p GeneticPool) float32 {
 	return sum / float32(p.Size())
 }
 
+// WeightedSelect selects creatures from the breeding stock weighted by fitness
 func WeightedSelect(breeding []Creature, maxFitness float32) Creature {
 	for {
 		// Only select from the breeding stock
@@ -55,7 +59,8 @@ func WeightedSelect(breeding []Creature, maxFitness float32) Creature {
 	}
 }
 
-func Run(p GeneticPool) Creature {
+// Run runs the genetic pool and finds the best creature
+func Run(p Pool) Creature {
 	startTime := time.Now().UnixNano()
 	var maxFitness, lastMaxFitness, averageFitness, lastAverageFitness float32
 	var t int64
@@ -71,10 +76,15 @@ func Run(p GeneticPool) Creature {
 		// Select breeding
 		breeding := p.Select()
 
+		// New pool
+		newPool := make([]Creature, 0, p.PoolSize())
+		newPool = append(newPool, breeding...)
+
 		// Fill pool: Crossover
 		bestCreature, maxFitness = MaxFitness(p)
 		averageFitness = AverageFitness(p)
-		for len(breeding) < p.Size() {
+		for len(newPool) < p.Size() {
+			// Select creatures for breeding
 			first := WeightedSelect(breeding, maxFitness)
 			other := WeightedSelect(breeding, maxFitness)
 			for {
@@ -83,10 +93,12 @@ func Run(p GeneticPool) Creature {
 				}
 				other = WeightedSelect(breeding, maxFitness)
 			}
+			// Crossover creatures
 			a, b := p.CrossOver(first, other)
-			breeding = append(breeding, a, b)
+			newPool = append(newPool, a, b)
 		}
-		p.SetCreatures(breeding)
+		// Update the creatures
+		p.SetCreatures(newPool)
 
 		// Mutate
 		for i := 0; i < p.Size(); i++ {
@@ -96,11 +108,11 @@ func Run(p GeneticPool) Creature {
 		}
 
 		t = (time.Now().UnixNano() - startTime) / (int64(time.Millisecond) / int64(time.Nanosecond))
-		fmt.Println(fmt.Sprintf("Iteration %d [%d ms], max fitness %f, average fitness %f.", iteration, t, maxFitness, averageFitness))
 		iteration++
+		fmt.Println(fmt.Sprintf("Iteration %d [%d ms, (av. %d ms)], max fitness %f, average fitness %f.", iteration, t, t/int64(iteration), maxFitness, averageFitness))
 	}
 
-	fmt.Println(fmt.Sprintf("Finished after %d ms. Best fitness is %f.", t, maxFitness))
+	fmt.Println(fmt.Sprintf("Finished after %d ms. Best fitness is %f. Best creature is %s", t, maxFitness, bestCreature))
 
 	return bestCreature
 }
