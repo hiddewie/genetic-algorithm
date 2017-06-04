@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-var _ Pool = (*TestPool)(nil)
-var _ Creature = (*TestCreature)(nil)
+var _ Pool = (*BasicPool)(nil)
+var _ Creature = (*OptimizationCreature)(nil)
 
-func TestTestPool(t *testing.T) {
+func TestBasicPool(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	pool := NewPool(100, 0.4, 3)
 	if pool.Size() != 100 {

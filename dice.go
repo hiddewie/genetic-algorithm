@@ -8,8 +8,8 @@ type Dice struct {
 	values []int
 }
 
-func NewDicePool(size int, selectProportion float32, iterations, n, sides int) *TestPool {
-	p := TestPool{size: size, selectProportion: selectProportion, iterations: iterations}
+func NewDicePool(size int, selectProportion float32, iterations, n, sides int) *BasicPool {
+	p := BasicPool{size: size, selectProportion: selectProportion, iterations: iterations}
 	p.pool = make([]Creature, 0, size)
 	for i := 0; i < size; i++ {
 		p.pool = append(p.pool, NewDice(n, sides))
